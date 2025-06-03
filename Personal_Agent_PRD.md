@@ -43,35 +43,275 @@ Transform the existing Azure Cosmos DB quickstart into an intelligent Personal A
 
 ## 2. Technical Architecture Evolution
 
+The following architecture diagrams provide multiple perspectives on the system design, showing the current state, target state, data flow patterns, interaction sequences, and the transformation journey. These visualizations help stakeholders understand both the technical implementation and the incremental development approach.
+
 ### 2.1 Current Architecture
-```
-┌─────────────────┐     ┌─────────────────┐
-│   Static HTML   │────▶│  Express Server │
-│  (Socket.IO)    │◀────│  (Socket.IO)    │
-└─────────────────┘     └────────┬────────┘
-                                 │
-                        ┌────────▼────────┐
-                        │  Azure Cosmos   │
-                        │       DB         │
-                        └─────────────────┘
+
+```mermaid
+graph TB
+    subgraph "Current Architecture - Azure Cosmos DB Quickstart"
+        Browser["Browser<br/>(Static HTML)"]
+        
+        subgraph "Backend Services"
+            Express["Express Server<br/>(app.ts)"]
+            SocketIO["Socket.IO Server<br/>(Real-time Events)"]
+            CosmosClient["Cosmos DB Client<br/>(cosmos.ts)"]
+        end
+        
+        subgraph "Data Layer"
+            CosmosDB[("Azure Cosmos DB<br/>NoSQL Database")]
+        end
+        
+        Browser <-->|"WebSocket<br/>Events"| SocketIO
+        SocketIO --> Express
+        Express --> CosmosClient
+        CosmosClient <-->|"CRUD Operations"| CosmosDB
+    end
+    
+    style Browser fill:#e1f5fe
+    style Express fill:#fff3e0
+    style SocketIO fill:#f3e5f5
+    style CosmosClient fill:#e8f5e9
+    style CosmosDB fill:#fce4ec
 ```
 
 ### 2.2 Target Architecture
-```
-┌─────────────────┐     ┌─────────────────────┐     ┌──────────────┐
-│   Next.js UI    │────▶│   Agent Core        │────▶│  OpenRouter  │
-│  (React/TS)     │◀────│   (Express.js)      │◀────│    (LLM)     │
-└─────────────────┘     └──────────┬──────────┘     └──────────────┘
-                                   │
-                        ┌──────────┼──────────┐
-                        │          │          │
-                ┌───────▼──┐  ┌────▼────┐  ┌─▼──────────┐
-                │ Cosmos DB │  │ Notion  │  │   Future   │
-                │  Memory   │  │   MCP   │  │ MS Graph   │
-                └───────────┘  └─────────┘  └────────────┘
+
+```mermaid
+graph TB
+    subgraph "Target Architecture - Personal Agent System"
+        subgraph "Frontend Layer"
+            NextUI["Next.js Application<br/>(React + TypeScript)"]
+            AgentUI["Agent Interface<br/>(Chat UI)"]
+        end
+        
+        subgraph "Agent Core Layer"
+            AgentOrch["Agent Orchestrator<br/>(app.ts evolved)"]
+            SocketHandler["Socket.IO Handler<br/>(Real-time Streaming)"]
+            
+            subgraph "Intelligence Components"
+                ReasoningEngine["Multi-Step<br/>Reasoning Engine"]
+                ContextManager["Context<br/>Manager"]
+                ToolSelector["Dynamic Tool<br/>Selector"]
+            end
+        end
+        
+        subgraph "Integration Layer"
+            OpenRouterClient["OpenRouter Client<br/>(LLM Interface)"]
+            NotionMCP["Notion MCP<br/>Server Client"]
+            FutureMSGraph["MS Graph API<br/>(Future)"]
+        end
+        
+        subgraph "Memory & Storage"
+            MemoryManager["Memory Manager<br/>(cosmos.ts evolved)"]
+            
+            subgraph "Data Schemas"
+                ConvHistory["Conversation<br/>History"]
+                UserPrefs["User<br/>Preferences"]
+                ToolLogs["Tool Usage<br/>Logs"]
+                Knowledge["Knowledge<br/>Cache"]
+            end
+        end
+        
+        subgraph "External Services"
+            OpenRouter[["OpenRouter API<br/>(Multiple LLMs)"]]
+            NotionAPI[["Notion API<br/>(via MCP)"]]
+            CosmosDB[("Azure Cosmos DB<br/>Agent Memory")]
+            MSServices[["Microsoft Services<br/>(Future)"]]
+        end
+        
+        NextUI --> AgentUI
+        AgentUI <-->|"WebSocket"| SocketHandler
+        SocketHandler --> AgentOrch
+        AgentOrch --> ReasoningEngine
+        ReasoningEngine --> ContextManager
+        ReasoningEngine --> ToolSelector
+        
+        ToolSelector --> OpenRouterClient
+        ToolSelector --> NotionMCP
+        ToolSelector -.->|"Future"| FutureMSGraph
+        
+        ContextManager --> MemoryManager
+        MemoryManager --> ConvHistory
+        MemoryManager --> UserPrefs
+        MemoryManager --> ToolLogs
+        MemoryManager --> Knowledge
+        
+        OpenRouterClient <-->|"API Calls"| OpenRouter
+        NotionMCP <-->|"API Calls"| NotionAPI
+        MemoryManager <-->|"Read/Write"| CosmosDB
+        FutureMSGraph -.->|"Future"| MSServices
+    end
+    
+    style NextUI fill:#e3f2fd
+    style AgentOrch fill:#fff8e1
+    style ReasoningEngine fill:#f3e5f5
+    style MemoryManager fill:#e8f5e9
+    style OpenRouter fill:#ffebee
+    style NotionAPI fill:#f5f5f5
+    style CosmosDB fill:#fce4ec
 ```
 
-### 2.3 Component Transformation Plan
+### 2.3 Data Flow Architecture
+
+```mermaid
+graph LR
+    subgraph "Agent Data Flow"
+        User["User Input"]
+        
+        subgraph "Processing Pipeline"
+            Input["1. Input Processing<br/>(Intent Recognition)"]
+            Planning["2. Task Planning<br/>(Multi-step Breakdown)"]
+            Memory["3. Memory Retrieval<br/>(Context Loading)"]
+            Tools["4. Tool Selection<br/>(API Integration)"]
+            Execution["5. Task Execution<br/>(Action Performance)"]
+            Response["6. Response Generation<br/>(LLM Synthesis)"]
+        end
+        
+        subgraph "Data Stores"
+            ConvDB[("Conversation<br/>History")]
+            PrefDB[("User<br/>Preferences")]
+            ToolDB[("Tool Usage<br/>Analytics")]
+        end
+        
+        subgraph "External APIs"
+            LLM[["LLM<br/>(OpenRouter)"]]
+            Notion[["Notion<br/>Workspace"]]
+        end
+        
+        User -->|"Natural Language"| Input
+        Input -->|"Parsed Intent"| Planning
+        Planning -->|"Task Steps"| Memory
+        Memory <-->|"Context"| ConvDB
+        Memory <-->|"Settings"| PrefDB
+        Memory -->|"Enriched Context"| Tools
+        Tools -->|"Selected Tools"| Execution
+        Execution <-->|"API Calls"| LLM
+        Execution <-->|"Actions"| Notion
+        Execution -->|"Results"| Response
+        Response -->|"Stream"| User
+        
+        Tools -->|"Log Usage"| ToolDB
+    end
+    
+    style User fill:#b3e5fc
+    style Input fill:#fff9c4
+    style Planning fill:#f8bbd0
+    style Memory fill:#c8e6c9
+    style Tools fill:#d1c4e9
+    style Execution fill:#ffccbc
+    style Response fill:#b2dfdb
+```
+
+### 2.4 Interaction Sequence
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant UI as Next.js UI
+    participant WS as WebSocket
+    participant A as Agent Core
+    participant M as Memory Manager
+    participant R as Reasoning Engine
+    participant T as Tool Selector
+    participant N as Notion MCP
+    participant L as OpenRouter LLM
+    participant DB as Cosmos DB
+    
+    U->>UI: "Update my project status in Notion"
+    UI->>WS: Send message via Socket.IO
+    WS->>A: Process agent_message event
+    
+    A->>M: Load user context
+    M->>DB: Query conversation history
+    DB-->>M: Return last 50 messages
+    M->>DB: Get user preferences
+    DB-->>M: Return preferences
+    M-->>A: Context loaded
+    
+    A->>R: Analyze intent with context
+    R->>L: Call LLM for intent parsing
+    L-->>R: Intent: UPDATE_NOTION_TASK
+    
+    R->>T: Select appropriate tools
+    T-->>R: Selected: notion_update_page
+    
+    R->>A: Execution plan ready
+    A->>N: Execute update_page(params)
+    N->>N: Validate parameters
+    N-->>A: Page updated successfully
+    
+    A->>L: Generate response with results
+    L-->>A: "I've updated your project status..."
+    
+    A->>M: Save interaction
+    M->>DB: Store conversation entry
+    M->>DB: Log tool usage
+    
+    A->>WS: Stream response chunks
+    WS->>UI: Emit agent_response events
+    UI->>U: Display streaming response
+```
+
+### 2.5 Transformation Journey
+
+```mermaid
+graph TD
+    subgraph "Transformation Journey"
+        subgraph "Phase 1: Foundation (Weeks 1-4)"
+            Current["Current State:<br/>Basic Cosmos DB App"]
+            Step1["Add Agent Core Module"]
+            Step2["Extend Cosmos DB Client<br/>for Memory Patterns"]
+            Step3["Integrate OpenRouter<br/>for LLM Access"]
+            Step4["Add Notion MCP<br/>Integration"]
+            
+            Current --> Step1
+            Step1 --> Step2
+            Step2 --> Step3
+            Step3 --> Step4
+        end
+        
+        subgraph "Phase 2: Intelligence (Weeks 5-8)"
+            Step5["Implement Reasoning<br/>Engine"]
+            Step6["Build Tool Registry<br/>& Selector"]
+            Step7["Add Context<br/>Management"]
+            Step8["Create Multi-step<br/>Task Planning"]
+            
+            Step4 --> Step5
+            Step5 --> Step6
+            Step6 --> Step7
+            Step7 --> Step8
+        end
+        
+        subgraph "Phase 3: Advanced (Weeks 9-12)"
+            Step9["Background Task<br/>Execution"]
+            Step10["Proactive Intelligence<br/>Features"]
+            Step11["Performance<br/>Optimization"]
+            Step12["Production-Ready<br/>Agent"]
+            
+            Step8 --> Step9
+            Step9 --> Step10
+            Step10 --> Step11
+            Step11 --> Step12
+        end
+        
+        subgraph "Future State"
+            Future["Azure AI Foundry<br/>Migration"]
+            Enterprise["Enterprise<br/>Deployment"]
+            
+            Step12 --> Future
+            Future --> Enterprise
+        end
+    end
+    
+    style Current fill:#ffcdd2
+    style Step4 fill:#c8e6c9
+    style Step8 fill:#bbdefb
+    style Step12 fill:#d1c4e9
+    style Enterprise fill:#fff9c4
+```
+
+### 2.6 Component Transformation Plan
 
 #### Phase 1: Foundation (Weeks 1-4)
 1. **Extend `cosmos.ts`** for agent memory patterns:
