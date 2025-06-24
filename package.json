@@ -8,7 +8,12 @@
   "scripts": {
     "build": "npx tsc && npx copyfiles ./static/**/* ./dist/",
     "start": "node dist/app.js",
-    "dev": "npx ts-node app.ts"
+    "dev": "npx ts-node app.ts",
+    "taskmaster": "ts-node taskmaster-automation.ts",
+    "tm:start": "npm run taskmaster",
+    "tm:docs": "echo \"Use: /context7 project-docs\"",
+    "tm:test": "echo \"Use: /test run context7-live\"",
+    "tm:help": "cat TASKMASTER_QUICKSTART.md"
   },
   "dependencies": {
     "@azure/cosmos": "^4",
@@ -21,8 +26,10 @@
   },
   "devDependencies": {
     "@types/express": "^4",
+    "@types/node": "^22",
     "@types/serve-favicon": "^2",
     "copyfiles": "^2",
+    "task-master-ai": "^0.18.0",
     "ts-node": "^10",
     "typescript": "^5"
   }
