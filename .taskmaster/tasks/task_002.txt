@@ -1,0 +1,29 @@
+# Task ID: 2
+# Title: Design Knowledge Graph Schema
+# Status: pending
+# Dependencies: 1
+# Priority: high
+# Description: Create a comprehensive schema for the knowledge graph including entities and relationships.
+# Details:
+1. Define entity types: Employee, Project, Department, Skill, Document
+2. Define relationships: works_on, manages, belongs_to, has_skill
+3. Use Apache TinkerPop's Gremlin for schema definition
+4. Implement domain-specific ontologies for enterprise context
+5. Design for graph traversal optimization
+
+Example Gremlin schema:
+```
+g.addV('Employee').property('id', 'e1').property('name', 'John Doe')
+g.addV('Project').property('id', 'p1').property('name', 'AI Initiative')
+g.addV('Department').property('id', 'd1').property('name', 'IT')
+g.addV('Skill').property('id', 's1').property('name', 'Python')
+g.addE('works_on').from('e1').to('p1')
+g.addE('belongs_to').from('e1').to('d1')
+g.addE('has_skill').from('e1').to('s1')
+```
+
+# Test Strategy:
+1. Validate schema using Gremlin console
+2. Perform sample queries to ensure correct relationships
+3. Test with small dataset for performance
+4. Verify ontology integration

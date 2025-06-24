@@ -1,0 +1,33 @@
+# Task ID: 10
+# Title: Develop Natural Language Query Processing
+# Status: pending
+# Dependencies: 2, 7, 8, 9
+# Priority: high
+# Description: Implement a system to process natural language queries and convert them into Gremlin queries.
+# Details:
+1. Use Azure Language Understanding (LUIS) for intent recognition
+2. Develop entity extraction for graph elements
+3. Implement query template system
+4. Create Gremlin query generator
+
+Example NL to Gremlin conversion:
+```python
+from azure.ai.language.conversations import ConversationAnalysisClient
+
+client = ConversationAnalysisClient(endpoint, credential)
+
+def nl_to_gremlin(query):
+    result = client.analyze_conversation(query)
+    intent = result.intent
+    entities = result.entities
+    
+    if intent == 'FindEmployeesBySkill':
+        skill = next(e for e in entities if e.category == 'Skill')
+        return f"g.V().has('type', 'Employee').out('has_skill').has('name', '{skill}').in('has_skill')"
+```
+
+# Test Strategy:
+1. Test with various natural language queries
+2. Validate intent recognition accuracy
+3. Verify correct Gremlin query generation
+4. Measure processing time and optimize

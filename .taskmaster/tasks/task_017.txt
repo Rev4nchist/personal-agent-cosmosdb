@@ -1,0 +1,36 @@
+# Task ID: 17
+# Title: Implement Row-Level Security
+# Status: pending
+# Dependencies: 2, 16
+# Priority: high
+# Description: Implement row-level security in Cosmos DB to restrict data access based on user roles.
+# Details:
+1. Design security model for different entity types
+2. Implement security filters in Gremlin queries
+3. Develop a middleware for applying security filters
+4. Integrate with Azure AD roles
+
+Example row-level security implementation:
+```javascript
+function applySecurityFilter(query, userRole) {
+    switch(userRole) {
+        case 'Manager':
+            return query.has('department', userDepartment);
+        case 'HR':
+            return query;
+        default:
+            return query.has('id', userId);
+    }
+}
+
+async function executeSecureQuery(query, user) {
+    const secureQuery = applySecurityFilter(query, user.role);
+    return await client.submit(secureQuery);
+}
+```
+
+# Test Strategy:
+1. Test data access for different user roles
+2. Validate that users can't access unauthorized data
+3. Measure performance impact of security filters
+4. Test with large datasets to ensure scalability

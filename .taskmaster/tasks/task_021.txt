@@ -1,0 +1,285 @@
+# Task ID: 21
+# Title: Integrate Suna Agent Framework
+# Status: pending
+# Dependencies: 7, 8, 9, 16, 17, 18
+# Priority: high
+# Description: Integrate the Suna agent framework into the Personal Agent project, including setup, custom skill creation, MCP adaptors, and enterprise security considerations.
+# Details:
+1. Set up Suna Agent Framework
+   - Install required packages and dependencies
+   - Configure environment variables and connection settings
+   - Initialize the Suna agent core components
+
+2. Implement Custom Skills
+   - GraphSkill: Develop a custom skill to interact with the knowledge graph
+     ```python
+     from suna.skills import BaseSkill
+     
+     class GraphSkill(BaseSkill):
+         def __init__(self, cosmos_client):
+             self.cosmos_client = cosmos_client
+             
+         async def query_graph(self, query_params):
+             # Implement graph query logic using CosmosAIGraph
+             results = await self.cosmos_client.execute_gremlin_query(query_params)
+             return self._process_results(results)
+     ```
+   
+   - DocumentSkill: Create a skill for document processing and analysis
+     ```python
+     class DocumentSkill(BaseSkill):
+         def __init__(self, ai_foundry_client):
+             self.ai_client = ai_foundry_client
+             
+         async def analyze_document(self, document):
+             # Extract insights from documents using AI Foundry
+             return await self.ai_client.analyze_content(document)
+     ```
+   
+   - WebActionSkill: Implement a skill for web interactions
+     ```python
+     class WebActionSkill(BaseSkill):
+         async def perform_web_action(self, action_type, parameters):
+             # Execute web-based actions securely
+             # Implement rate limiting and security checks
+             return await self._execute_action(action_type, parameters)
+     ```
+   
+   - LocalDebugSkill: Develop a skill for local debugging and testing
+     ```python
+     class LocalDebugSkill(BaseSkill):
+         def __init__(self, log_level="INFO"):
+             self.log_level = log_level
+             
+         async def debug_agent_state(self):
+             # Capture and analyze agent state for debugging
+             return self._get_diagnostic_info()
+     ```
+
+3. Implement MCP (Multi-Channel Protocol) Adaptors
+   - Browserbase Adaptor:
+     ```python
+     from suna.adaptors import BaseAdaptor
+     
+     class BrowserbaseAdaptor(BaseAdaptor):
+         def __init__(self, config):
+             self.config = config
+             self.session = None
+             
+         async def initialize(self):
+             # Set up Browserbase session with proper authentication
+             self.session = await self._create_secure_session()
+             
+         async def execute_action(self, action):
+             # Execute browser actions with audit logging
+             result = await self.session.execute(action)
+             await self._log_action(action, result)
+             return result
+     ```
+   
+   - Playwright Adaptor:
+     ```python
+     class PlaywrightAdaptor(BaseAdaptor):
+         async def initialize(self):
+             # Initialize Playwright with security considerations
+             self.browser = await self._launch_secure_browser()
+             
+         async def navigate(self, url):
+             # Implement secure navigation with proper error handling
+             page = await self.browser.new_page()
+             await page.goto(url)
+             return page
+     ```
+
+4. Implement Enterprise Security Features
+   - Azure AD Integration:
+     ```python
+     from suna.security import AuthProvider
+     
+     class AzureADAuth(AuthProvider):
+         def __init__(self, tenant_id, client_id):
+             self.tenant_id = tenant_id
+             self.client_id = client_id
+             
+         async def authenticate(self, credentials):
+             # Implement Azure AD authentication flow
+             # Validate tokens and handle refresh
+             return await self._get_auth_token(credentials)
+     ```
+   
+   - RBAC Implementation:
+     ```python
+     class RBACManager:
+         def __init__(self, auth_provider):
+             self.auth_provider = auth_provider
+             
+         async def check_permission(self, user, resource, action):
+             # Verify user has permission to access resource
+             user_roles = await self.auth_provider.get_user_roles(user)
+             return self._evaluate_permission(user_roles, resource, action)
+     ```
+   
+   - Audit Logging:
+     ```python
+     class AuditLogger:
+         def __init__(self, log_storage):
+             self.log_storage = log_storage
+             
+         async def log_action(self, user, action, resource, result):
+             # Create comprehensive audit log entry
+             log_entry = {
+                 "timestamp": datetime.now().isoformat(),
+                 "user": user,
+                 "action": action,
+                 "resource": resource,
+                 "result": result,
+                 "ip_address": self._get_client_ip()
+             }
+             await self.log_storage.store_log(log_entry)
+     ```
+
+5. Integration with Existing Systems
+   - Connect to CosmosAIGraph for knowledge graph operations
+   - Integrate with OmniRAG for information retrieval
+   - Ensure compatibility with existing Azure AI Foundry services
+
+# Test Strategy:
+1. Unit Testing
+   - Test each custom skill individually
+     ```python
+     def test_graph_skill():
+         # Mock cosmos client
+         mock_client = MockCosmosClient()
+         skill = GraphSkill(mock_client)
+         
+         # Test query functionality
+         result = await skill.query_graph({"entity": "test_entity"})
+         assert result is not None
+         assert "nodes" in result
+     ```
+   
+   - Test MCP adaptors with mock environments
+     ```python
+     def test_browserbase_adaptor():
+         mock_config = {"api_key": "test_key"}
+         adaptor = BrowserbaseAdaptor(mock_config)
+         
+         # Test initialization
+         await adaptor.initialize()
+         assert adaptor.session is not None
+         
+         # Test action execution
+         result = await adaptor.execute_action({"type": "click", "selector": "#test"})
+         assert result["status"] == "success"
+     ```
+
+2. Integration Testing
+   - Test end-to-end agent workflows
+     ```python
+     def test_agent_workflow():
+         agent = SunaAgent()
+         agent.add_skill(GraphSkill(cosmos_client))
+         agent.add_skill(DocumentSkill(ai_client))
+         
+         # Test complete workflow
+         result = await agent.execute_task("find information about project X")
+         assert result["status"] == "completed"
+     ```
+   
+   - Test security integration
+     ```python
+     def test_security_integration():
+         auth = AzureADAuth(tenant_id, client_id)
+         rbac = RBACManager(auth)
+         
+         # Test authentication
+         token = await auth.authenticate(test_credentials)
+         assert token is not None
+         
+         # Test permission checking
+         has_permission = await rbac.check_permission("test_user", "document_1", "read")
+         assert has_permission is True
+     ```
+
+3. Security Testing
+   - Perform penetration testing on agent endpoints
+   - Verify proper token validation and expiration
+   - Test audit logging for completeness
+     ```python
+     def test_audit_logging():
+         logger = AuditLogger(mock_storage)
+         
+         # Test log creation
+         await logger.log_action("user1", "read", "document_1", "success")
+         
+         # Verify log was stored
+         logs = await mock_storage.get_logs(user="user1")
+         assert len(logs) == 1
+         assert logs[0]["action"] == "read"
+     ```
+
+4. Performance Testing
+   - Measure response times for agent operations
+   - Test under load to ensure stability
+   - Verify resource usage remains within acceptable limits
+
+5. Acceptance Testing
+   - Verify all requirements are met
+   - Conduct user acceptance testing with stakeholders
+   - Ensure compatibility with existing systems and workflows
+
+# Subtasks:
+## 1. Set up Suna Agent Framework Core Components [pending]
+### Dependencies: None
+### Description: Install and configure the Suna agent framework with all required dependencies, environment variables, and connection settings to establish the foundation for the Personal Agent project.
+### Details:
+1. Install the Suna agent framework using pip: `pip install suna-agent-framework`
+2. Configure environment variables in a .env file including API keys, endpoints, and service connection strings
+3. Initialize the core components by creating a SunaAgent instance with appropriate configuration
+4. Set up logging and telemetry for the agent framework
+5. Create a basic agent configuration file that defines the agent's capabilities and limitations
+
+## 2. Implement Custom Skills for Agent Capabilities [pending]
+### Dependencies: None
+### Description: Develop the four required custom skills (GraphSkill, DocumentSkill, WebActionSkill, and LocalDebugSkill) that will provide the core functionality for the Personal Agent.
+### Details:
+1. Create a skills directory with separate files for each skill class
+2. Implement GraphSkill with methods to query and update the knowledge graph using CosmosAIGraph
+3. Build DocumentSkill with document analysis capabilities using AI Foundry client
+4. Develop WebActionSkill with secure web interaction methods and appropriate rate limiting
+5. Create LocalDebugSkill with comprehensive debugging and diagnostic capabilities
+6. Ensure all skills follow the BaseSkill interface and implement proper error handling
+
+## 3. Implement MCP Adaptors for External Interactions [pending]
+### Dependencies: None
+### Description: Create Multi-Channel Protocol adaptors for Browserbase and Playwright to enable the agent to interact with web-based systems securely and efficiently.
+### Details:
+1. Create an adaptors directory with separate files for each adaptor implementation
+2. Implement BrowserbaseAdaptor with secure session management and action execution
+3. Develop PlaywrightAdaptor with browser initialization and navigation capabilities
+4. Add comprehensive audit logging for all adaptor actions
+5. Implement proper error handling and retry mechanisms
+6. Create a factory class to instantiate the appropriate adaptor based on configuration
+
+## 4. Implement Enterprise Security Features [pending]
+### Dependencies: None
+### Description: Integrate Azure AD authentication, Role-Based Access Control (RBAC), and comprehensive audit logging to ensure the agent meets enterprise security requirements.
+### Details:
+1. Implement AzureADAuth provider that handles authentication flows and token management
+2. Create RBACManager to enforce permission checks on all agent actions
+3. Develop AuditLogger to record all significant agent activities with appropriate detail
+4. Implement secure credential storage and management
+5. Add encryption for sensitive data at rest and in transit
+6. Create security configuration options that can be adjusted based on deployment environment
+
+## 5. Integrate with Existing Systems and Services [pending]
+### Dependencies: None
+### Description: Connect the Suna agent framework with existing systems including CosmosAIGraph, OmniRAG, and Azure AI Foundry services to provide a cohesive agent experience.
+### Details:
+1. Create service client wrappers for CosmosAIGraph that work with the GraphSkill
+2. Implement OmniRAG integration for information retrieval capabilities
+3. Set up connections to Azure AI Foundry services for advanced AI capabilities
+4. Create a unified configuration system that manages all service connections
+5. Implement graceful degradation when services are unavailable
+6. Add comprehensive integration tests that verify end-to-end workflows
+

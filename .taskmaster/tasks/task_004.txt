@@ -1,0 +1,49 @@
+# Task ID: 4
+# Title: Develop ETL Pipeline for Data Transformation
+# Status: pending
+# Dependencies: 2, 3
+# Priority: high
+# Description: Create an ETL pipeline to transform and load data from Microsoft Graph into Cosmos DB.
+# Details:
+1. Use Azure Data Factory for ETL process
+2. Design data flows for each entity type
+3. Implement data cleansing and normalization
+4. Set up incremental loading for efficiency
+5. Use Cosmos DB bulk executor library for optimized writes
+
+Azure Data Factory pipeline example:
+```json
+{
+  "name": "CopyPipeline",
+  "properties": {
+    "activities": [
+      {
+        "name": "CopyFromGraphToCosmosDB",
+        "type": "Copy",
+        "inputs": [{
+          "referenceName": "GraphAPIDataset",
+          "type": "DatasetReference"
+        }],
+        "outputs": [{
+          "referenceName": "CosmosDBDataset",
+          "type": "DatasetReference"
+        }],
+        "typeProperties": {
+          "source": {
+            "type": "RestSource"
+          },
+          "sink": {
+            "type": "CosmosDbGremlinSink"
+          }
+        }
+      }
+    ]
+  }
+}
+```
+
+# Test Strategy:
+1. Validate data integrity after transformation
+2. Test incremental load scenarios
+3. Measure pipeline performance and optimize
+4. Verify error handling and logging
